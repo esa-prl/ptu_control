@@ -24,7 +24,7 @@ private:
   
   void load_params();
 
-  void load_ptu_model();
+  bool load_ptu_model();
 
   // Access parameters through the parameters_client_
   std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
