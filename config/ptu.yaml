@@ -1,0 +1,6 @@
+ptu_control_node:
+    ros__parameters:
+        use_sim_time: True
+        robot_description: ''
+        pan_joint_identifier: 'PAN'
+        tilt_joint_identifier: 'TLT'
