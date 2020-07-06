@@ -39,15 +39,11 @@ To build from source, clone the latest version from this repository into your ro
 
 ## Usage
 
-Describe the quickest way to run this software, for example:
-
 Run the main node with
 
     ros2 run ptu_control ptu_control_node --ros-args--params-file PATH_TO_PARAMSFILE
 
 ## Config files
-
-Config file folder/set 1
 
 * **ptu.yaml** Contains the path to the model and the identifiers for the pan and tilt joint. This is only an example file. Have a look at [rover_config] to see how ptu is used in context.
 
@@ -55,7 +51,7 @@ Config file folder/set 1
 
 ### ptu_control_node
 
-Reads ptu velocity commands and send motor commands.
+Reads ptu velocity commands and sends motor commands.
 
 
 #### Subscribed Topics
