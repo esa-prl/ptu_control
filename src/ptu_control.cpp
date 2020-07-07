@@ -12,25 +12,18 @@ PTUControl::PTUControl(rclcpp::NodeOptions options, std::string node_name)
 
   // Load URDF
   if (!load_ptu_model()) {
-    RCLCPP_ERROR(this->get_logger(), "TODO: Add Proper error handling for this shutdown RIP node.");
+    rclcpp::shutdown();
   }
 
   // Create Publishers
   joint_command_publisher_ = this->create_publisher<rover_msgs::msg::JointCommandArray>(
     "joint_cmds", 10);
 
-  // // Create Subscriptions
-  // joint_state_subscription_ = this->create_subscription<sensor_msgs::msg::JointState>(
-  //   "joint_states", 10, std::bind(
-  //     &LocomotionMode::joint_state_callback, this,
-  //     std::placeholders::_1));
-
   ptu_velocities_subscription_ = this->create_subscription<geometry_msgs::msg::Twist>(
     "ptu_cmd", 10,
     std::bind(&PTUControl::ptu_velocities_callback, this, std::placeholders::_1));
 
-
-  RCLCPP_INFO(this->get_logger(), "PTUControl initialized");
+  RCLCPP_INFO(this->get_logger(), "%s STARTED.", node_name.c_str());
 }
 
 
@@ -38,10 +31,10 @@ void PTUControl::load_params()
 {
   while (!parameters_client_->wait_for_service(1s)) {
     if (!rclcpp::ok()) {
-      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the service. Exiting.");
+      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the parameter service. Exiting.");
       rclcpp::shutdown();
     }
-    RCLCPP_INFO(this->get_logger(), "service not available, waiting again...");
+    RCLCPP_INFO(this->get_logger(), "Parameter service not available, waiting again...");
   }
 
   // Load urdf model path
@@ -58,7 +51,11 @@ bool PTUControl::load_ptu_model()
     RCLCPP_ERROR(
       this->get_logger(), "URDF file [%s] not found. Make sure the path is specified in the launch file.",
       model_path_.c_str());
-  } else {RCLCPP_INFO(this->get_logger(), "Successfully parsed urdf file.");}
+    return false;
+  }
+  else {
+    RCLCPP_INFO(this->get_logger(), "Successfully parsed urdf file.");
+  }
 
   // Get Links
   model_->getLinks(links_);
@@ -74,7 +71,7 @@ bool PTUControl::load_ptu_model()
             child_joint->type == urdf::Joint::CONTINUOUS)
           {
             pan_joint_ = child_joint;
-            RCLCPP_INFO(this->get_logger(), "PAN JOINT FOUND!");
+            RCLCPP_INFO(this->get_logger(), "Pan joint found.");
           }
         }
         else if (child_joint->name.find(tilt_joint_identifier_) != std::string::npos) {
@@ -82,45 +79,45 @@ bool PTUControl::load_ptu_model()
             child_joint->type == urdf::Joint::CONTINUOUS)
           {
             tilt_joint_ = child_joint;
-            RCLCPP_INFO(this->get_logger(), "TILT JOINT FOUND!");
+            RCLCPP_INFO(this->get_logger(), "Tilt joint found.");
           }
         }
       }
     }
   }
 
-  if (!pan_joint_) {
-    RCLCPP_WARN(this->get_logger(), "NO PAN JOINT FOUND!");
-  }
-
-  if (!tilt_joint_) {
-    RCLCPP_WARN(this->get_logger(), "NO TILT JOINT FOUND!");
-  }
-
   if (!pan_joint_ && !tilt_joint_) {
-    RCLCPP_ERROR(this->get_logger(), "NO PAN NOR TILT JOINT FOUND! ABORTING!");
+    RCLCPP_ERROR(this->get_logger(), "NEITHER PAN NOR TILT JOINT FOUND! ABORTING!");
     return false;
   }
+  else {
+    if (!pan_joint_) {
+      RCLCPP_WARN(this->get_logger(), "NO PAN JOINT FOUND!");
+    }
 
-  return true;
+    if (!tilt_joint_) {
+      RCLCPP_WARN(this->get_logger(), "NO TILT JOINT FOUND!");
+    }
+    
+    return true;
+  }
+  
 }
 
 void PTUControl::ptu_velocities_callback(const geometry_msgs::msg::Twist::SharedPtr msg) {
   // TODO: CHECK FOR LIMITS
 
-
   // TODO: Make clock member variable
   rclcpp::Clock::SharedPtr clock = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
 
-  // Create JointCommandArray Msg
+  // Message which will contain both the pan and tilt command messages.
   rover_msgs::msg::JointCommandArray joint_command_array_msg;
 
-  // Create Pan and Tilt Joint Message
   rover_msgs::msg::JointCommand pan_msg;
   rover_msgs::msg::JointCommand tilt_msg;
 
+  // Populate Messages
   if (pan_joint_) {
-    // Fills Driving Message
     pan_msg.header.stamp = clock->now();
     pan_msg.name = pan_joint_->name;
     pan_msg.mode = ("VELOCITY");
@@ -130,7 +127,6 @@ void PTUControl::ptu_velocities_callback(const geometry_msgs::msg::Twist::Shared
   }
 
   if (tilt_joint_) {
-
     tilt_msg.header.stamp = clock->now();
     tilt_msg.name = tilt_joint_->name;
     tilt_msg.mode = ("VELOCITY");
@@ -138,7 +134,6 @@ void PTUControl::ptu_velocities_callback(const geometry_msgs::msg::Twist::Shared
     
     joint_command_array_msg.joint_command_array.push_back(tilt_msg);
   }
-
 
   joint_command_publisher_->publish(joint_command_array_msg);
 }
