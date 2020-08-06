@@ -38,7 +38,7 @@ void PTUControl::load_params()
   }
 
   // Load urdf model path
-  model_path_ = parameters_client_->get_parameters({"robot_description"})[0].value_to_string();
+  model_path_ = parameters_client_->get_parameters({"urdf_path"})[0].value_to_string();
 
   pan_joint_identifier_ = parameters_client_->get_parameters({"pan_joint_identifier"})[0].value_to_string();
   tilt_joint_identifier_ = parameters_client_->get_parameters({"tilt_joint_identifier"})[0].value_to_string();
