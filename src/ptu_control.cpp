@@ -1,5 +1,6 @@
 #include "ptu_control/ptu_control.hpp"
 
+namespace ptu_control{
 
 PTUControl::PTUControl(rclcpp::NodeOptions options, std::string node_name)
 : Node(node_name,
@@ -133,6 +134,8 @@ void PTUControl::ptu_velocities_callback(const geometry_msgs::msg::Twist::Shared
   joint_command_publisher_->publish(joint_command_array_msg);
 }
 
+}
+
 
 
 
@@ -140,7 +143,7 @@ int main(int argc, char * argv[])
 {
   rclcpp::NodeOptions options;
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PTUControl>(options, "ptu_control_node"));
+  rclcpp::spin(std::make_shared<ptu_control::PTUControl>(options, "ptu_control_node"));
   rclcpp::shutdown();
   return 0;
 }

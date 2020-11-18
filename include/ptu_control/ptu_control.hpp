@@ -15,6 +15,8 @@
 
 using namespace std::chrono_literals;
 
+namespace ptu_control{
+
 class PTUControl : public rclcpp::Node
 {
 public:
@@ -59,5 +61,6 @@ private:
   std::vector<std::shared_ptr<urdf::Joint>> joints_;
   std::vector<std::shared_ptr<urdf::Link>> links_;
 
-
 };
+
+}
