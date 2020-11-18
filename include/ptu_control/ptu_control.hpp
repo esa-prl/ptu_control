@@ -1,5 +1,4 @@
-#ifndef PTU_CONTROL_H
-#define PTU_CONTROL_H
+#pragma once
 
 #include "rclcpp/rclcpp.hpp"
 #include <urdf/model.h>
@@ -61,6 +60,3 @@ private:
 
 
 };
-
-
-#endif
