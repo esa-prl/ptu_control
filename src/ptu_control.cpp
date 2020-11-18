@@ -137,8 +137,6 @@ void PTUControl::ptu_velocities_callback(const geometry_msgs::msg::Twist::Shared
 }
 
 
-
-
 int main(int argc, char * argv[])
 {
   rclcpp::NodeOptions options;
