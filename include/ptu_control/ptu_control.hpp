@@ -6,6 +6,7 @@
 
 #include <chrono>
 #include <string.h>
+#include <regex>
 
 #include <geometry_msgs/msg/twist.hpp>
 
@@ -24,10 +25,6 @@ private:
   void load_params();
 
   bool load_ptu_model();
-
-  // Access parameters through the parameters_client_
-  std::shared_ptr<rclcpp::SyncParametersClient> parameters_client_;
-
 
   // PTU Velocity Command Subscription
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr ptu_velocities_subscription_;
@@ -51,6 +48,10 @@ private:
   // Identifiers specified in config file
   std::string pan_joint_identifier_;
   std::string tilt_joint_identifier_;
+  
+  std::regex pan_regex_;
+  std::regex tilt_regex_;
+
 
   std::shared_ptr<urdf::Joint> pan_joint_;
   std::shared_ptr<urdf::Joint> tilt_joint_;
