@@ -1,10 +1,11 @@
 #include "ptu_control/ptu_control.hpp"
 
+namespace ptu_control{
+
 PTUControl::PTUControl(rclcpp::NodeOptions options, std::string node_name)
 : Node(node_name,
     options.allow_undeclared_parameters(true).
     automatically_declare_parameters_from_overrides(true)),
-  parameters_client_(std::make_shared<rclcpp::SyncParametersClient>(this)),
   model_(new urdf::Model())
 {
   // Load Params
@@ -29,19 +30,14 @@ PTUControl::PTUControl(rclcpp::NodeOptions options, std::string node_name)
 
 void PTUControl::load_params()
 {
-  while (!parameters_client_->wait_for_service(1s)) {
-    if (!rclcpp::ok()) {
-      RCLCPP_ERROR(this->get_logger(), "Interrupted while waiting for the parameter service. Exiting.");
-      rclcpp::shutdown();
-    }
-    RCLCPP_INFO(this->get_logger(), "Parameter service not available, waiting again...");
-  }
-
   // Load urdf model path
-  model_path_ = parameters_client_->get_parameters({"urdf_path"})[0].value_to_string();
+  model_path_ = this->get_parameter("urdf_path").as_string();
 
-  pan_joint_identifier_ = parameters_client_->get_parameters({"pan_joint_identifier"})[0].value_to_string();
-  tilt_joint_identifier_ = parameters_client_->get_parameters({"tilt_joint_identifier"})[0].value_to_string();
+  pan_joint_identifier_ = this->get_parameter("pan_joint_identifier").as_string();
+  tilt_joint_identifier_ = this->get_parameter("tilt_joint_identifier").as_string();
+
+  pan_regex_ = std::regex("(?:^|_)"+pan_joint_identifier_+"(?:$|_)");
+  tilt_regex_ = std::regex("(?:^|_)"+tilt_joint_identifier_+"(?:$|_)");
 }
 
 
@@ -66,7 +62,7 @@ bool PTUControl::load_ptu_model()
       for (std::shared_ptr<urdf::Joint> child_joint : link->child_joints) {
         joints_.push_back(child_joint);
 
-        if (child_joint->name.find(pan_joint_identifier_) != std::string::npos) {
+        if (std::regex_search(child_joint->name, pan_regex_)) {
           if (child_joint->type == urdf::Joint::REVOLUTE ||
             child_joint->type == urdf::Joint::CONTINUOUS)
           {
@@ -74,7 +70,7 @@ bool PTUControl::load_ptu_model()
             RCLCPP_INFO(this->get_logger(), "Pan joint found.");
           }
         }
-        else if (child_joint->name.find(tilt_joint_identifier_) != std::string::npos) {
+        else if (std::regex_search(child_joint->name, tilt_regex_)) {
           if (child_joint->type == urdf::Joint::REVOLUTE ||
             child_joint->type == urdf::Joint::CONTINUOUS)
           {
@@ -138,14 +134,14 @@ void PTUControl::ptu_velocities_callback(const geometry_msgs::msg::Twist::Shared
   joint_command_publisher_->publish(joint_command_array_msg);
 }
 
-
+}
 
 
 int main(int argc, char * argv[])
 {
   rclcpp::NodeOptions options;
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PTUControl>(options, "ptu_control_node"));
+  rclcpp::spin(std::make_shared<ptu_control::PTUControl>(options, "ptu_control_node"));
   rclcpp::shutdown();
   return 0;
 }
